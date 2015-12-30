@@ -9,7 +9,7 @@
  * Plugin Name:       Jobboard Company Fix
  * Plugin URI:        http://minimalthemes.net/
  * Description:       Plugin to fix company database between backend and frontend for Jobboard theme.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Author:            MinimalThemes
  * Author URI:        http://minimalthemes.net/
  * License:           GPL-2.0+
@@ -41,6 +41,7 @@ class Jbfix_Company {
 		add_action( 'admin_menu', array( &$this, 'jbfix_company_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'jbfix_company_admin_enqueues' ) );
 		add_action( 'wp_ajax_jbfix_company', array( &$this, 'jbfix_company_ajax_proccess' ) );
+		add_filter( 'post_row_actions', array( &$this, 'jbfix_company_fixthis' ), 10, 2 );
 
 		$this->capability = apply_filters( 'jbfix_company_cap', 'edit_theme_options' );
 		$this->companypost = wp_count_posts('company','readable')->publish;
@@ -54,6 +55,21 @@ class Jbfix_Company {
 			'jbfix-company',
 			array( &$this, 'jbfix_company_interface' )
 		);
+	}
+
+	function jbfix_company_fixthis( $actions, $post ) {
+
+		if ( $post->post_type == 'company' ) {
+			if ( get_post_meta( $post->ID, '_jboard_company_mb_updated', true ) ) {
+				return $actions;
+			}
+			$qwe = add_query_arg(
+				array( 'page' => 'jbfix-company', 'goback' => true, 'ids' => $post->ID ),
+				admin_url( 'tools.php' ) );
+			$url = wp_nonce_url( $qwe, 'jbfix-company-post' );
+			$actions['jbfix-company'] = '<a href="'.esc_url($url).'">Fix This</a>';
+		}
+		return $actions;
 	}
 
 	function jbfix_company_admin_enqueues( $hooks ) {
@@ -99,8 +115,7 @@ class Jbfix_Company {
 			check_admin_referer( 'jbfix-company-post' );
 
 			if ( ! empty( $_REQUEST['ids'] ) ) {
-				$comps = array_map( 'intval', explode( ',', trim( $_REQUEST['ids'], ',' ) ) );
-				$ids = implode( ',', $comps );
+				$ids = (int) $_REQUEST['ids'];
 			}
 			else {
 				if ( ! $comps = $wpdb->get_results( "SELECT ID FROM $wpdb->posts WHERE post_type = 'company' ORDER BY ID DESC" ) ) {
@@ -116,7 +131,7 @@ class Jbfix_Company {
 
 			echo '<p>Please be patient while the company post database are fixed.</p>';
 
-			$count = count( $comps );
+			$count = count( explode( ',', $ids ) );
 
 			$nonce_url = wp_nonce_url( admin_url( 'tools.php?page=jbfix-company&goback=1' ), 'jbfix-company-post' );
 
@@ -349,8 +364,11 @@ class Jbfix_Company {
 
 			$add_field = $this->jbfix_add_company_field( $comp->ID );
 
-			if ( $add_field )
-				update_post_meta( $comp-ID, '_jboard_company_mb_updated', '1' );
+			if ( $add_field ) {
+				update_post_meta( $comp->ID, '_jboard_company_mb_updated', '1' );
+			} else {
+				$this->die_json_error_msg( $comp->ID, "Failed to update this database." );
+			}
 		}
 
 		die( json_encode(
@@ -470,32 +488,32 @@ class Jbfix_Company {
 			? get_post_meta( $comp_id, '_jboard_company_portfolio_stored_url', true )
 			: array();
 
-		$company_portfolio_data = ( get_post_meta( $comp_id, '_jboard_company_client_group_container', true ) )
-			? get_post_meta( $comp_id, '_jboard_company_client_group_container', true )
+		$company_portfolio_data = ( get_post_meta( $comp_id, '_jboard_company_portfolio_group_container', true ) )
+			? get_post_meta( $comp_id, '_jboard_company_portfolio_group_container', true )
 			: array();
 
 		if ( !empty( $company_portfolio_data ) ) {
 
-			$companyclientdata = array();
+			$companyportfoliodata = array();
 
-			if ( array_key_exists( '_jboard_company_client_group', $company_portfolio_data ) ) {
-				$companyclientdata = $company_portfolio_data['_jboard_company_client_group'];
+			if ( array_key_exists( '_jboard_company_portfolio_group', $company_portfolio_data ) ) {
+				$companyportfoliodata = $company_portfolio_data['_jboard_company_portfolio_group'];
 			}
-			elseif ( array_key_exists( 'company_client_group', $company_portfolio_data[0] ) ) {
-				$companyclientdata = $company_portfolio_data[0]['company_client_group'];
+			elseif ( array_key_exists( 'company_portfolio_group', $company_portfolio_data[0] ) ) {
+				$companyportfoliodata = $company_portfolio_data[0]['company_portfolio_group'];
 			}
 
-			if ( !empty( $companyclientdata ) ) {
+			if ( !empty( $companyportfoliodata ) ) {
 
-				foreach ( $companyclientdata as $key => $compfolio ) {
-					if ( is_numeric( $companyclientdata[ $key ]['portfolio_image'] ) ) {
-						$companyclientdata[ $key ]['portfolio_stored_image_id'] = $companyclientdata[ $key ]['portfolio_image'];
-						$companyclientdata[ $key ]['portfolio_image'] = wp_get_attachment_url( $companyclientdata[ $key ]['portfolio_image'] );
+				foreach ( $companyportfoliodata as $key => $compfolio ) {
+					if ( is_numeric( $companyportfoliodata[ $key ]['portfolio_image'] ) ) {
+						$companyportfoliodata[ $key ]['portfolio_stored_image_id'] = $companyportfoliodata[ $key ]['portfolio_image'];
+						$companyportfoliodata[ $key ]['portfolio_image'] = wp_get_attachment_url( $companyportfoliodata[ $key ]['portfolio_image'] );
 					}
 				}
 
-				update_post_meta( $comp_id, '_jboard_company_client_group_container', array(
-						array( 'company_client_group' => $companyclientdata )
+				update_post_meta( $comp_id, '_jboard_company_portfolio_group_container', array(
+						array( 'company_portfolio_group' => $companyclientdata )
 				) );
 			}
 		} elseif ( !empty( $company_portfolio_stored_img ) ) {
@@ -513,8 +531,8 @@ class Jbfix_Company {
 					'portfolio_url'				=> $portfolio_url,
 				);
 			}
-			update_post_meta( $comp_id, '_jboard_company_client_group_container', array(
-					array( 'company_client_group' => $companyclientdata )
+			update_post_meta( $comp_id, '_jboard_company_portfolio_group_container', array(
+					array( 'company_portfolio_group' => $companyclientdata )
 			) );
 		}
 
