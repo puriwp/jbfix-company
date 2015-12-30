@@ -9,7 +9,7 @@
  * Plugin Name:       Jobboard Company Fix
  * Plugin URI:        http://minimalthemes.net/
  * Description:       Plugin to fix company database between backend and frontend for Jobboard theme.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            MinimalThemes
  * Author URI:        http://minimalthemes.net/
  * License:           GPL-2.0+
@@ -274,6 +274,21 @@ class Jbfix_Company {
 		else {
 ?>
 	<div class="wrap">
+		<h3>Bug Fix For Older Company Database</h3>
+		<p><strong>This tool is for:</strong></p>
+		<ol>
+			<li>Old jobboard user before version 2.5.1</li>
+			<li>Have several Companies post inputted via frontend</li>
+			<li>Never edited any user company post via backend</li>
+		</ol>
+
+		<p><strong>This tool is not for:</strong></p>
+		<ol>
+			<li>Newly user just bought JobBoard Theme on v2.5.1</li>
+			<li>Old users who has never upgraded to JobBoard v2.5.1</li>
+			<li>Old users who currently don't have any Companies post</li>
+		</ol>
+
 		<h3>Bug - Inaccurate backend company data with the data from the frontend</h3>
 		<p><strong>Test case :</strong></p>
 		<ol>
