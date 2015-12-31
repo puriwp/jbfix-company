@@ -21,7 +21,7 @@ class Jbfix_Company_Activator {
     // meet minimum requirements.
     static function activation_check() {
         if ( ! self::compatible_version() ) {
-            wp_die( '<strong>ERROR!</strong> Job Board version 2.5.0 is not installed or activated!' );
+            wp_die( '<strong>ERROR!</strong> Job Board version 2.5.2 is not installed or activated!' );
         }
     }
 
@@ -37,21 +37,20 @@ class Jbfix_Company_Activator {
     }
 
     function disabled_notice() {
-       echo '<strong>ERROR!</strong> Job Board version 2.5.0 is not installed or activated!';
+       echo '<strong>ERROR!</strong> Job Board version 2.5.2 is not installed or activated!';
     }
 
     static function compatible_version() {
 
-		$return = false;
-
-		if ( defined( 'JBOARD_VERSION' ) && version_compare( JBOARD_VERSION, '2.5.0', '>=' ) ) {
-			$return = true;
-		}
-
-        if ( version_compare( $GLOBALS['wp_version'], '4.0', '<' ) ) {
 			$return = false;
-        }
 
-        return $return;
+			if ( defined( 'JBOARD_VERSION' ) && version_compare( JBOARD_VERSION, '2.5.2', '>=' ) ) {
+				$return = true;
+			}
+
+			if ( version_compare( $GLOBALS['wp_version'], '4.0', '<' ) ) {
+				$return = false;
+			}
+			return $return;
     }
 }
